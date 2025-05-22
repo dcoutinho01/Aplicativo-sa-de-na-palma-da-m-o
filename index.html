@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saúde na palma da mão - Montes Claros</title>
+    <meta name="description" content="Encontre hospitais, postos de saúde e clínicas em Montes Claros/MG">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/chat.css">
+    <link rel="icon" href="https://images.pexels.com/photos/7088530/pexels-photo-7088530.jpeg?auto=compress&cs=tinysrgb&w=32">
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <img src="https://i.imgur.com/QpQOHRG.png" alt="Logo Saúde na Palma da Mão" class="logo">
+            <h1>Saúde na palma da mão <span>Montes Claros/MG</span></h1>
+            <div class="time" id="current-time">--:--</div>
+        </div>
+    </header>
+
+    <div class="search-container">
+        <input type="text" id="search-input" placeholder="Buscar por nome, endereço ou serviço...">
+        <button id="filter-btn" title="Filtrar resultados"><i class="fas fa-sliders-h"></i></button>
+    </div>
+
+    <div class="filter-options" id="filter-options">
+        <div class="filter-header">
+            <h3>Filtrar por</h3>
+            <button id="close-filter" aria-label="Fechar filtros"><i class="fas fa-times"></i></button>
+        </div>
+        
+        <div class="filter-group">
+            <h4>Tipo de Estabelecimento</h4>
+            <label>
+                <input type="checkbox" name="type" value="hospital" checked>
+                <span>Hospitais</span>
+            </label>
+            <label>
+                <input type="checkbox" name="type" value="health-center" checked>
+                <span>Postos de Saúde</span>
+            </label>
+            <label>
+                <input type="checkbox" name="type" value="clinic" checked>
+                <span>Clínicas Médicas</span>
+            </label>
+        </div>
+        
+        <div class="filter-group">
+            <h4>Serviços</h4>
+            <label>
+                <input type="checkbox" name="service" value="emergencia">
+                <span>Emergência 24h</span>
+            </label>
+            <label>
+                <input type="checkbox" name="service" value="vacina">
+                <span>Vacinação</span>
+            </label>
+            <label>
+                <input type="checkbox" name="service" value="consulta">
+                <span>Consultas</span>
+            </label>
+            <label>
+                <input type="checkbox" name="service" value="exame">
+                <span>Exames</span>
+            </label>
+        </div>
+        
+        <div class="filter-group">
+            <h4>Status</h4>
+            <label>
+                <input type="checkbox" name="status" value="open">
+                <span>Aberto agora</span>
+            </label>
+            <label>
+                <input type="checkbox" name="status" value="24h">
+                <span>Atendimento 24h</span>
+            </label>
+        </div>
+        
+        <button id="apply-filters" class="primary-btn">
+            <i class="fas fa-check"></i> Aplicar Filtros
+        </button>
+    </div>
+
+    <div class="main-content">
+        <div class="map-container" id="map-container">
+            <div id="map"></div>
+        </div>
+        
+        <div class="facilities-container">
+            <div class="results-header">
+                <h2 class="section-title" id="results-title">Estabelecimentos de Saúde</h2>
+                <div class="view-toggle">
+                    <button class="active" data-view="list">
+                        <i class="fas fa-list"></i>
+                    </button>
+                    <button data-view="grid">
+                        <i class="fas fa-th"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="health-facilities" id="facilities-list"></div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal" id="auth-modal">
+        <div class="modal-content">
+            <button class="close-btn" id="close-auth" aria-label="Fechar">&times;</button>
+            <h2>Bem-vindo(a)!</h2>
+            <p>Crie uma conta para salvar seus locais favoritos e receber atualizações.</p>
+            
+            <form id="auth-form" class="auth-form">
+                <div class="form-group">
+                    <label for="user-email">E-mail</label>
+                    <input type="email" id="user-email" placeholder="seu@email.com" required>
+                </div>
+                
+                <button type="submit" id="continue-btn" class="primary-btn">
+                    <i class="fas fa-arrow-right"></i> Continuar
+                </button>
+            </form>
+            
+            <div class="divider"><span>ou</span></div>
+            
+            <div class="social-login">
+                <button class="social-btn google-btn" id="google-btn">
+                    <i class="fab fa-google"></i> Continuar com Google
+                </button>
+                <button class="social-btn apple-btn" id="apple-btn">
+                    <i class="fab fa-apple"></i> Continuar com Apple
+                </button>
+            </div>
+            
+            <p class="terms">
+                Ao continuar, você concorda com nossos 
+                <a href="#">Termos de Serviço</a> e 
+                <a href="#">Política de Privacidade</a>
+            </p>
+        </div>
+    </div>
+
+    <div class="modal" id="facility-modal">
+        <div class="modal-content large">
+            <button class="close-btn" id="close-facility" aria-label="Fechar">&times;</button>
+            
+            <div class="facility-header">
+                <h2 id="detail-title"></h2>
+                <div class="facility-type" id="detail-type"></div>
+            </div>
+            
+            <div class="facility-body">
+                <div class="facility-info">
+                    <p id="detail-description"></p>
+                    
+                    <div class="info-group">
+                        <div class="info-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span id="detail-address"></span>
+                        </div>
+                        
+                        <div class="info-item">
+                            <i class="fas fa-phone"></i>
+                            <span id="detail-phone"></span>
+                        </div>
+                        
+                        <div class="info-item">
+                            <i class="far fa-clock"></i>
+                            <span id="detail-hours"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="services-container">
+                        <h3>Serviços oferecidos</h3>
+                        <div class="services-list" id="detail-services"></div>
+                    </div>
+                </div>
+                
+                <div class="facility-actions">
+                    <button id="directions-btn" class="primary-btn">
+                        <i class="fas fa-directions"></i> Como chegar
+                    </button>
+                    <button id="call-btn" class="secondary-btn">
+                        <i class="fas fa-phone"></i> Ligar
+                    </button>
+                    <button id="chat-btn" class="secondary-btn">
+                        <i class="fas fa-comments"></i> Iniciar Chat
+                    </button>
+                    <button id="favorite-btn" class="secondary-btn">
+                        <i class="far fa-heart"></i> Favoritar
+                    </button>
+                    <button id="share-btn" class="secondary-btn">
+                        <i class="fas fa-share-alt"></i> Compartilhar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Interface -->
+    <button class="chat-trigger" id="chat-trigger">
+        <i class="fas fa-comments"></i>
+    </button>
+
+    <div class="chat-container" id="chat-container">
+        <div class="chat-header">
+            <h3>
+                <span class="status"></span>
+                <span id="chat-title">Chat Médico</span>
+            </h3>
+            <div class="chat-controls">
+                <button id="minimize-chat">
+                    <i class="fas fa-minus"></i>
+                </button>
+                <button id="close-chat">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="chat-messages"></div>
+        
+        <div class="chat-input-container">
+            <form class="chat-input-form">
+                <input type="text" class="chat-input" placeholder="Digite sua mensagem..." required>
+                <button type="submit" class="send-button">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="spinner"></div>
+        <p>Carregando...</p>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script type="module" src="js/app.js"></script>
+    <script type="module" src="js/chat.js"></script>
+</body>
+</html>
